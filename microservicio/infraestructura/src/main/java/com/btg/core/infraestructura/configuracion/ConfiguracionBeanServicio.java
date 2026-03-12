@@ -11,6 +11,7 @@ import com.btg.core.dominio.fondo.puerto.dao.DaoFondo;
 import com.btg.core.dominio.transaccion.puerto.dao.DaoTransaccion;
 import com.btg.core.dominio.transaccion.puerto.repositorio.RepositorioTransaccion;
 import com.btg.core.dominio.transaccion.servicio.ServicioCancelarSuscripcion;
+import com.btg.core.dominio.transaccion.servicio.ServicioConsultarTransacciones;
 import com.btg.core.dominio.transaccion.servicio.ServicioSuscribirFondo;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -49,5 +50,11 @@ public class ConfiguracionBeanServicio {
                                                                     DaoFondo daoFondo,
                                                                     RepositorioTransaccion repositorioTransaccion) {
         return new ServicioCancelarSuscripcion(daoTransaccion, daoCliente, daoFondo, repositorioTransaccion);
+    }
+
+    @Bean
+    public ServicioConsultarTransacciones servicioConsultarTransacciones(DaoCliente daoCliente,
+                                                                          DaoTransaccion daoTransaccion) {
+        return new ServicioConsultarTransacciones(daoCliente, daoTransaccion);
     }
 }
