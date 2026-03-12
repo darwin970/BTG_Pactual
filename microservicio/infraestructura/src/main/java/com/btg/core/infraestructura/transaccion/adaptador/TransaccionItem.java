@@ -22,6 +22,7 @@ public class TransaccionItem {
     private String estado;
     private String preferenciaNotificacion;
     private String fecha;
+    private String fechaCancelacion;
 
     @DynamoDbPartitionKey
     public String getId() {

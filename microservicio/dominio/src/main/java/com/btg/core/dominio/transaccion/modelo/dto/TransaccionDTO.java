@@ -17,4 +17,5 @@ public class TransaccionDTO {
     private String estado;
     private String preferenciaNotificacion;
     private String fecha;
+    private String fechaCancelacion;
 }

@@ -53,7 +53,8 @@ public class ServicioSuscribirFondo {
                 transaccion.getMonto(),
                 transaccion.getEstado(),
                 transaccion.getPreferenciaNotificacion(),
-                transaccion.getFecha().toString()
+                transaccion.getFecha().toString(),
+                null
         );
     }
 }

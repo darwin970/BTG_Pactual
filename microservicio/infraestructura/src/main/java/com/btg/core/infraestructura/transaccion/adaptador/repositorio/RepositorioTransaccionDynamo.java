@@ -36,7 +36,8 @@ public class RepositorioTransaccionDynamo implements RepositorioTransaccion {
                 transaccion.getMonto(),
                 transaccion.getEstado(),
                 transaccion.getPreferenciaNotificacion(),
-                transaccion.getFecha().toString()
+                transaccion.getFecha().toString(),
+                null
         );
 
         ClienteItem clienteExistente = tablaClientes.getItem(
@@ -54,5 +55,25 @@ public class RepositorioTransaccionDynamo implements RepositorioTransaccion {
         );
 
         return transaccion.getId();
+    }
+
+    @Override
+    public void cancelar(String transaccionId, String fechaCancelacion, String clienteId, Double nuevoSaldo) {
+        TransaccionItem transaccionExistente = tablaTransacciones.getItem(
+                Key.builder().partitionValue(transaccionId).build()
+        );
+        transaccionExistente.setEstado("CANCELADA");
+        transaccionExistente.setFechaCancelacion(fechaCancelacion);
+
+        ClienteItem clienteExistente = tablaClientes.getItem(
+                Key.builder().partitionValue(clienteId).build()
+        );
+        clienteExistente.setSaldo(nuevoSaldo);
+
+        enhancedClient.transactWriteItems(TransactWriteItemsEnhancedRequest.builder()
+                .addUpdateItem(tablaTransacciones, transaccionExistente)
+                .addUpdateItem(tablaClientes, clienteExistente)
+                .build()
+        );
     }
 }
