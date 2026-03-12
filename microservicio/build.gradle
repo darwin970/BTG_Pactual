@@ -1,0 +1,69 @@
+allprojects {
+	
+	repositories {
+		mavenCentral()		
+	}
+	
+	project.ext.junit = ["junit:junit:4.12"]
+	project.ext.mockito = ['org.mockito:mockito-core:4.11.0']
+	project.ext.h2 = ["com.h2database:h2:1.4.194"]
+	
+	project.ext.lombok = ["org.projectlombok:lombok:1.18.30"]
+	
+	project.ext.springboottest = ["org.springframework.boot:spring-boot-starter-test:${springBootVersion}"]
+	project.ext.springbootweb = ["org.springframework.boot:spring-boot-starter-web:${springBootVersion}"]
+	project.ext.springbootundertow = ["org.springframework.boot:spring-boot-starter-undertow:${springBootVersion}"]
+	
+	project.ext.flyway = ["org.flywaydb:flyway-core:5.2.1"]
+	project.ext.flywaytest = ["org.flywaydb.flyway-test-extensions:flyway-spring-test:5.2.1"]
+	project.ext.springtxt = [
+							  	"org.springframework:spring-tx:${springVersion}",
+							  	"org.springframework:spring-context:${springVersion}"
+							]
+	
+}
+
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+	}
+}
+
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+
+group = 'com.btg'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '17'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+
+	configurations {
+    	implementation.exclude module: 'spring-boot-starter-tomcat'
+	}
+	
+	implementation project.ext.springbootweb
+	implementation project.ext.springbootundertow
+	
+	implementation project(':consulta:consulta-infraestructura')
+	implementation project(':comando:comando-infraestructura')
+	implementation project(':comun:comun-infraestructura')
+	
+
+	
+}
+
+bootJar {
+	mainClass = 'com.btg.core.Application'
+    archiveBaseName = 'btg'
+    archiveVersion =  version
+}

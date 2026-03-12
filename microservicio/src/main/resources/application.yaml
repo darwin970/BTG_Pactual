@@ -1,0 +1,21 @@
+jasypt:
+   encryptor:
+      password: ${jasyptpwd}
+      algorithm: PBEWithMD5AndDES
+
+server:
+   port: 8083
+   servlet:
+      context-path: /btg
+
+spring:
+   mvc:
+      pathmatch:
+         matching-strategy: ant_path_matcher
+
+aws:
+   dynamodb:
+      region: ${AWS_REGION:us-east-1}
+
+tiempoHealthCheck:
+   tiempo: 50000

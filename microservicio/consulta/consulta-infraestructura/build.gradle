@@ -1,0 +1,43 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'jacoco'
+
+group = 'com.btg'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '17'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+
+	testImplementation project.ext.h2
+	testImplementation project.ext.springboottest
+	testImplementation project.ext.flywaytest
+	testImplementation project.ext.mockito
+	testImplementation project.ext.junit
+	testImplementation project(':comun:comun-test')
+
+	implementation project(':consulta:consulta-dominio')
+	implementation project(':consulta:consulta-aplicacion')
+	
+	implementation project(':comun:comun-infraestructura')
+
+	implementation platform('software.amazon.awssdk:bom:2.25.70')
+	implementation 'software.amazon.awssdk:dynamodb-enhanced'
+	implementation 'software.amazon.awssdk:dynamodb'
+}
+
+jacocoTestReport {
+	reports {
+		xml.required = true
+		html.required = true
+	}
+	additionalSourceDirs files("../consulta-aplicacion/src/main/java")
+	additionalClassDirs files("../consulta-aplicacion/build/classes/java/main")
+}
+
+test {
+	finalizedBy jacocoTestReport
+}
