@@ -20,6 +20,8 @@ public class ClienteItem {
     private String email;
     private String telefono;
     private Double saldo;
+    private String contrasena;
+    private String rol;
 
     @DynamoDbPartitionKey
     public String getId() {

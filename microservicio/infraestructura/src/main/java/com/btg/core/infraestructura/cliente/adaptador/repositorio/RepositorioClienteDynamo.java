@@ -31,7 +31,7 @@ public class RepositorioClienteDynamo implements RepositorioCliente {
     public String crear(Cliente cliente) {
         String id = UUID.randomUUID().toString();
         ClienteItem item = new ClienteItem(id, cliente.getNombre(), cliente.getEmail(),
-                cliente.getTelefono(), cliente.getSaldo());
+                cliente.getTelefono(), cliente.getSaldo(), cliente.getContrasena(), cliente.getRol());
         tabla.putItem(item);
         return id;
     }
@@ -42,5 +42,17 @@ public class RepositorioClienteDynamo implements RepositorioCliente {
                 Key.builder().partitionValue(email).build()))
                 .stream()
                 .anyMatch(page -> !page.items().isEmpty());
+    }
+
+    @Override
+    public Cliente obtenerPorEmail(String email) {
+        return indiceEmail.query(QueryConditional.keyEqualTo(
+                Key.builder().partitionValue(email).build()))
+                .stream()
+                .flatMap(page -> page.items().stream())
+                .findFirst()
+                .map(item -> new Cliente(item.getId(), item.getNombre(), item.getEmail(),
+                        item.getTelefono(), item.getSaldo(), item.getContrasena(), item.getRol()))
+                .orElse(null);
     }
 }

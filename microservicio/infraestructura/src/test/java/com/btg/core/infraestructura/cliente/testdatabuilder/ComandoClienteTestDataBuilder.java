@@ -7,11 +7,13 @@ public class ComandoClienteTestDataBuilder {
     private String nombre;
     private String email;
     private String telefono;
+    private String contrasena;
 
     public ComandoClienteTestDataBuilder() {
         this.nombre = "Juan Pérez";
         this.email = "juan.perez@email.com";
         this.telefono = "3001234567";
+        this.contrasena = "Clave123*";
     }
 
     public ComandoClienteTestDataBuilder conNombre(String nombre) {
@@ -29,7 +31,12 @@ public class ComandoClienteTestDataBuilder {
         return this;
     }
 
+    public ComandoClienteTestDataBuilder conContrasena(String contrasena) {
+        this.contrasena = contrasena;
+        return this;
+    }
+
     public ComandoCliente construir() {
-        return new ComandoCliente(nombre, email, telefono);
+        return new ComandoCliente(nombre, email, telefono, contrasena);
     }
 }

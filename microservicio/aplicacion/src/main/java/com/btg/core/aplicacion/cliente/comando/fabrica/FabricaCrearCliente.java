@@ -8,6 +8,6 @@ import org.springframework.stereotype.Component;
 public class FabricaCrearCliente {
 
     public Cliente ejecutar(ComandoCliente comando) {
-        return new Cliente(comando.getNombre(), comando.getEmail(), comando.getTelefono());
+        return new Cliente(comando.getNombre(), comando.getEmail(), comando.getTelefono(), comando.getContrasena());
     }
 }

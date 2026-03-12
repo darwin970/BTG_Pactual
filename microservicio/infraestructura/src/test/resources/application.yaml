@@ -11,3 +11,7 @@ spring:
 aws:
   dynamodb:
     region: us-east-2
+
+jwt:
+  secret: clave-secreta-muy-larga-para-pruebas-de-integracion-btg-pactual-2026
+  expiracion: 86400000

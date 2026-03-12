@@ -7,4 +7,6 @@ public interface RepositorioCliente {
     String crear(Cliente cliente);
 
     boolean existeConEmail(String email);
+
+    Cliente obtenerPorEmail(String email);
 }

@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import com.btg.core.dominio.excepcion.ExcepcionAccesoDenegado;
+import com.btg.core.dominio.excepcion.ExcepcionAutenticacion;
 import com.btg.core.dominio.excepcion.ExcepcionDuplicidad;
 import com.btg.core.dominio.excepcion.ExcepcionLongitudValor;
 import com.btg.core.dominio.excepcion.ExcepcionSinDatos;
@@ -34,6 +36,8 @@ public class ManejadorError extends ResponseEntityExceptionHandler {
         CODIGOS_ESTADO.put(ExcepcionValorObligatorio.class.getSimpleName(), HttpStatus.BAD_REQUEST.value());
         CODIGOS_ESTADO.put(ExcepcionDuplicidad.class.getSimpleName(), HttpStatus.CONFLICT.value());
         CODIGOS_ESTADO.put(ExcepcionTecnica.class.getSimpleName(), HttpStatus.INTERNAL_SERVER_ERROR.value());
+        CODIGOS_ESTADO.put(ExcepcionAutenticacion.class.getSimpleName(), HttpStatus.UNAUTHORIZED.value());
+        CODIGOS_ESTADO.put(ExcepcionAccesoDenegado.class.getSimpleName(), HttpStatus.FORBIDDEN.value());
         
         
         

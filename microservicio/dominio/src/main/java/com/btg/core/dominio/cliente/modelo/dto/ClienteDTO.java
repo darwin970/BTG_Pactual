@@ -14,4 +14,5 @@ public class ClienteDTO {
     private String email;
     private String telefono;
     private Double saldo;
+    private String rol;
 }

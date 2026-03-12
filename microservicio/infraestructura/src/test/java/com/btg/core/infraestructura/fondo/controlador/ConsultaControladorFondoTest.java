@@ -1,5 +1,6 @@
 package com.btg.core.infraestructura.fondo.controlador;
 
+import com.btg.core.dominio.cliente.puerto.repositorio.GeneradorToken;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,10 +23,16 @@ public class ConsultaControladorFondoTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private GeneradorToken generadorToken;
+
     @Test
     public void listarFondosRetorna200ConCincoFondos() throws Exception {
+        String token = generadorToken.generar("test-id", "test@email.com", "CLIENTE").getToken();
+
         // Act & Assert
-        mockMvc.perform(get("/fondos"))
+        mockMvc.perform(get("/fondos")
+                .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(5)))
                 .andExpect(jsonPath("$[*].nombre", containsInAnyOrder(

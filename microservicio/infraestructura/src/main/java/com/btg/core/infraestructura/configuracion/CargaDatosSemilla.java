@@ -1,5 +1,6 @@
 package com.btg.core.infraestructura.configuracion;
 
+import com.btg.core.dominio.cliente.puerto.repositorio.EncriptadorContrasena;
 import com.btg.core.infraestructura.cliente.adaptador.ClienteItem;
 import com.btg.core.infraestructura.fondo.adaptador.FondoItem;
 import org.slf4j.Logger;
@@ -35,17 +36,27 @@ public class CargaDatosSemilla implements CommandLineRunner {
     private final DynamoDbClient dynamoDbClient;
     private final DynamoDbTable<ClienteItem> tablaClientes;
     private final DynamoDbTable<FondoItem> tablaFondos;
+    private final EncriptadorContrasena encriptadorContrasena;
 
-    public CargaDatosSemilla(DynamoDbClient dynamoDbClient, DynamoDbEnhancedClient enhancedClient) {
+    public CargaDatosSemilla(DynamoDbClient dynamoDbClient, DynamoDbEnhancedClient enhancedClient,
+                              EncriptadorContrasena encriptadorContrasena) {
         this.dynamoDbClient = dynamoDbClient;
         this.tablaClientes = enhancedClient.table(TABLA_CLIENTES, TableSchema.fromBean(ClienteItem.class));
         this.tablaFondos = enhancedClient.table(TABLA_FONDOS, TableSchema.fromBean(FondoItem.class));
+        this.encriptadorContrasena = encriptadorContrasena;
     }
 
     @Override
     public void run(String... args) {
         crearTablaClientesSiNoExiste();
         crearTablaFondosSiNoExiste();
+
+        if (tablaClientesVacia()) {
+            cargarClientesSemilla();
+            LOGGER.info("Datos semilla de clientes cargados exitosamente");
+        } else {
+            LOGGER.info("La tabla Clientes ya contiene datos, se omite la carga semilla");
+        }
 
         if (tablaFondosVacia()) {
             cargarFondosSemilla();
@@ -118,6 +129,23 @@ public class CargaDatosSemilla implements CommandLineRunner {
 
     private boolean tablaFondosVacia() {
         return tablaFondos.scan().items().stream().findFirst().isEmpty();
+    }
+
+    private boolean tablaClientesVacia() {
+        return tablaClientes.scan().items().stream().findFirst().isEmpty();
+    }
+
+    private void cargarClientesSemilla() {
+        String contrasenaAdmin = encriptadorContrasena.encriptar("Admin123*");
+        String contrasenaCliente = encriptadorContrasena.encriptar("Cliente123*");
+
+        List<ClienteItem> clientes = Arrays.asList(
+                new ClienteItem("admin-001", "Administrador BTG", "admin@btg.com",
+                        "3001000000", 500000.0, contrasenaAdmin, "ADMIN"),
+                new ClienteItem("cliente-001", "Cliente BTG", "cliente@btg.com",
+                        "3002000000", 500000.0, contrasenaCliente, "CLIENTE")
+        );
+        clientes.forEach(tablaClientes::putItem);
     }
 
     private void cargarFondosSemilla() {

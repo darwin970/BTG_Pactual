@@ -7,10 +7,8 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ComandoCliente {
+public class ComandoAutenticar {
 
-    private String nombre;
     private String email;
-    private String telefono;
     private String contrasena;
 }

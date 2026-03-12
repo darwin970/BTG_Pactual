@@ -27,6 +27,6 @@ public class DaoClienteDynamo implements DaoCliente {
             return null;
         }
         return new ClienteDTO(item.getId(), item.getNombre(), item.getEmail(),
-                item.getTelefono(), item.getSaldo());
+                item.getTelefono(), item.getSaldo(), item.getRol());
     }
 }

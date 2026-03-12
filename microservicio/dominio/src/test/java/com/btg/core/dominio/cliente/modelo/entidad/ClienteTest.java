@@ -21,12 +21,14 @@ public class ClienteTest {
         assertEquals("juan.perez@email.com", cliente.getEmail());
         assertEquals("3001234567", cliente.getTelefono());
         assertEquals(500000.0, cliente.getSaldo(), 0.01);
+        assertEquals("Clave123*", cliente.getContrasena());
+        assertEquals("CLIENTE", cliente.getRol());
     }
 
     @Test
     public void crearClienteSinIdConSaldoInicialExitosamente() {
         // Arrange - Act
-        Cliente cliente = new Cliente("María López", "maria@email.com", "3109876543");
+        Cliente cliente = new Cliente("María López", "maria@email.com", "3109876543", "MiClave123");
 
         // Assert
         assertNull(cliente.getId());
@@ -34,6 +36,8 @@ public class ClienteTest {
         assertEquals("maria@email.com", cliente.getEmail());
         assertEquals("3109876543", cliente.getTelefono());
         assertEquals(500000.0, cliente.getSaldo(), 0.01);
+        assertEquals("MiClave123", cliente.getContrasena());
+        assertEquals(Cliente.ROL_CLIENTE, cliente.getRol());
     }
 
     @Test
@@ -114,5 +118,46 @@ public class ClienteTest {
                 ExcepcionValorObligatorio.class,
                 "El teléfono del cliente es obligatorio"
         );
+    }
+
+    @Test
+    public void crearClienteConCredencialesCompletasExitosamente() {
+        // Arrange - Act
+        Cliente cliente = new Cliente("Carlos García", "carlos@email.com", "3005551234", "Password123");
+
+        // Assert
+        assertEquals("Carlos García", cliente.getNombre());
+        assertEquals("carlos@email.com", cliente.getEmail());
+        assertEquals("Password123", cliente.getContrasena());
+        assertEquals(Cliente.ROL_CLIENTE, cliente.getRol());
+    }
+
+    @Test
+    public void crearClienteSinContrasenaLanzaExcepcion() {
+        // Arrange - Act - Assert
+        BasePrueba.assertThrows(
+                () -> new Cliente("Juan Test", "juan@email.com", "3001234567", null),
+                ExcepcionValorObligatorio.class,
+                "La contraseña del cliente es obligatoria"
+        );
+    }
+
+    @Test
+    public void crearClienteConContrasenaVaciaLanzaExcepcion() {
+        // Arrange - Act - Assert
+        BasePrueba.assertThrows(
+                () -> new Cliente("Juan Test", "juan@email.com", "3001234567", ""),
+                ExcepcionValorObligatorio.class,
+                "La contraseña del cliente es obligatoria"
+        );
+    }
+
+    @Test
+    public void crearClienteConConstructorCompletoAsignaRolCorrectamente() {
+        // Arrange - Act
+        Cliente cliente = new ClienteTestDataBuilder().conRol("ADMIN").construir();
+
+        // Assert
+        assertEquals("ADMIN", cliente.getRol());
     }
 }
