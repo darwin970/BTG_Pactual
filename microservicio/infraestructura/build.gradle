@@ -1,5 +1,4 @@
 apply plugin: 'java'
-apply plugin: 'eclipse'
 apply plugin: 'jacoco'
 
 group = 'com.btg'
@@ -12,23 +11,23 @@ repositories {
 
 dependencies {
 
-	testImplementation project.ext.h2
-	testImplementation project.ext.springboottest
-	testImplementation project.ext.flyway
-	testImplementation project.ext.flywaytest
-	testImplementation project.ext.mockito
-	testImplementation project.ext.junit
-	testImplementation project(':comun:comun-test')
+	implementation project(':dominio')
+	implementation project(':aplicacion')
 
-	implementation project(':comando:comando-dominio')
-	implementation project(':comando:comando-aplicacion')	
-	
 	implementation project(':comun:comun-infraestructura')
 	implementation project(':comun:comun-aplicacion-comando')
 
 	implementation platform('software.amazon.awssdk:bom:2.25.70')
 	implementation 'software.amazon.awssdk:dynamodb-enhanced'
 	implementation 'software.amazon.awssdk:dynamodb'
+
+	compileOnly project.ext.lombok
+	annotationProcessor project.ext.lombok
+
+	testImplementation project.ext.springboottest
+	testImplementation project.ext.mockito
+	testImplementation project.ext.junit
+	testImplementation project(':comun:comun-test')
 }
 
 jacocoTestReport {
@@ -36,8 +35,8 @@ jacocoTestReport {
 		xml.required = true
 		html.required = true
 	}
-	additionalSourceDirs files("../comando-aplicacion/src/main/java")
-	additionalClassDirs files("../comando-aplicacion/build/classes/java/main")
+	additionalSourceDirs files("../aplicacion/src/main/java")
+	additionalClassDirs files("../aplicacion/build/classes/java/main")
 }
 
 test {

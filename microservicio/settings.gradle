@@ -6,15 +6,9 @@ include ':comun',
 		':comun:comun-dominio',
 		':comun:comun-test'
 
-include ':comando',
-		':comando:comando-infraestructura',
-		':comando:comando-aplicacion', 
-		':comando:comando-dominio'
-
-include ':consulta',
-		':consulta:consulta-infraestructura',
-		':consulta:consulta-aplicacion', 
-		':consulta:consulta-dominio'
+include ':infraestructura'
+include ':aplicacion'
+include ':dominio'
 
 project(':comun').projectDir = new File('../comun')
 

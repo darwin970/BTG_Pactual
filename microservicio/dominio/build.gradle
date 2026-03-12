@@ -1,5 +1,4 @@
 apply plugin: 'java'
-apply plugin: 'eclipse'
 apply plugin: 'jacoco'
 
 group = 'com.btg'
@@ -11,8 +10,15 @@ repositories {
 }
 
 dependencies {
+
+	implementation project(':comun:comun-dominio')
+
 	compileOnly project.ext.lombok
 	annotationProcessor project.ext.lombok
+
+	testImplementation project.ext.junit
+	testImplementation project.ext.mockito
+	testImplementation project(':comun:comun-test')
 }
 
 jacocoTestReport {
