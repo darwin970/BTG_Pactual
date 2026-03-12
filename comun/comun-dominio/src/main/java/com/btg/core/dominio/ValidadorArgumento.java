@@ -19,6 +19,9 @@ public class ValidadorArgumento {
         if (valor == null) {
             throw new ExcepcionValorObligatorio(mensaje);
         }
+        if (valor instanceof String && ((String) valor).trim().isEmpty()) {
+            throw new ExcepcionValorObligatorio(mensaje);
+        }
     }
     
     public static void validarLongitud(String valor,int longitud,String mensaje){

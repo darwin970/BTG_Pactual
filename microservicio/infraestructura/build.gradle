@@ -19,6 +19,7 @@ dependencies {
 	implementation project(':comun:comun-aplicacion-comando')
 
 	implementation project.ext.springtxt
+	implementation project.ext.springbootweb
 
 	implementation platform('software.amazon.awssdk:bom:2.25.70')
 	implementation 'software.amazon.awssdk:dynamodb-enhanced'

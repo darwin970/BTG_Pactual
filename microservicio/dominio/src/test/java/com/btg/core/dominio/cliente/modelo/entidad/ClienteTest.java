@@ -85,4 +85,34 @@ public class ClienteTest {
                 "El teléfono del cliente debe ser numérico"
         );
     }
+
+    @Test
+    public void crearClienteConNombreVacioLanzaExcepcion() {
+        // Arrange - Act - Assert
+        BasePrueba.assertThrows(
+                () -> new ClienteTestDataBuilder().conNombre("").build(),
+                ExcepcionValorObligatorio.class,
+                "El nombre del cliente es obligatorio"
+        );
+    }
+
+    @Test
+    public void crearClienteConEmailVacioLanzaExcepcion() {
+        // Arrange - Act - Assert
+        BasePrueba.assertThrows(
+                () -> new ClienteTestDataBuilder().conEmail("").build(),
+                ExcepcionValorObligatorio.class,
+                "El email del cliente es obligatorio"
+        );
+    }
+
+    @Test
+    public void crearClienteConTelefonoVacioLanzaExcepcion() {
+        // Arrange - Act - Assert
+        BasePrueba.assertThrows(
+                () -> new ClienteTestDataBuilder().conTelefono("").build(),
+                ExcepcionValorObligatorio.class,
+                "El teléfono del cliente es obligatorio"
+        );
+    }
 }
