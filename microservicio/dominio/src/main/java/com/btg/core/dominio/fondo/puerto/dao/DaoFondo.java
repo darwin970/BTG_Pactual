@@ -7,4 +7,6 @@ import java.util.List;
 public interface DaoFondo {
 
     List<FondoDTO> listarTodos();
+
+    FondoDTO obtenerPorId(String id);
 }

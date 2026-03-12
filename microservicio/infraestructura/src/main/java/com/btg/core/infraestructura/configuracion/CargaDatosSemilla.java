@@ -32,6 +32,7 @@ public class CargaDatosSemilla implements CommandLineRunner {
     private static final Logger LOGGER = LoggerFactory.getLogger(CargaDatosSemilla.class);
     private static final String TABLA_CLIENTES = "Clientes";
     private static final String TABLA_FONDOS = "Fondos";
+    private static final String TABLA_TRANSACCIONES = "Transacciones";
 
     private final DynamoDbClient dynamoDbClient;
     private final DynamoDbTable<ClienteItem> tablaClientes;
@@ -50,6 +51,7 @@ public class CargaDatosSemilla implements CommandLineRunner {
     public void run(String... args) {
         crearTablaClientesSiNoExiste();
         crearTablaFondosSiNoExiste();
+        crearTablaTransaccionesSiNoExiste();
 
         if (tablaClientesVacia()) {
             cargarClientesSemilla();
@@ -110,6 +112,32 @@ public class CargaDatosSemilla implements CommandLineRunner {
         dynamoDbClient.createTable(request);
         esperarTablaActiva(TABLA_FONDOS);
         LOGGER.info("Tabla {} creada exitosamente", TABLA_FONDOS);
+    }
+
+    private void crearTablaTransaccionesSiNoExiste() {
+        if (tablaExiste(TABLA_TRANSACCIONES)) {
+            LOGGER.info("La tabla {} ya existe", TABLA_TRANSACCIONES);
+            return;
+        }
+
+        CreateTableRequest request = CreateTableRequest.builder()
+                .tableName(TABLA_TRANSACCIONES)
+                .keySchema(KeySchemaElement.builder().attributeName("id").keyType(KeyType.HASH).build())
+                .attributeDefinitions(
+                        AttributeDefinition.builder().attributeName("id").attributeType(ScalarAttributeType.S).build(),
+                        AttributeDefinition.builder().attributeName("clienteId").attributeType(ScalarAttributeType.S).build()
+                )
+                .globalSecondaryIndexes(GlobalSecondaryIndex.builder()
+                        .indexName("clienteId-index")
+                        .keySchema(KeySchemaElement.builder().attributeName("clienteId").keyType(KeyType.HASH).build())
+                        .projection(Projection.builder().projectionType(ProjectionType.ALL).build())
+                        .build())
+                .billingMode(BillingMode.PAY_PER_REQUEST)
+                .build();
+
+        dynamoDbClient.createTable(request);
+        esperarTablaActiva(TABLA_TRANSACCIONES);
+        LOGGER.info("Tabla {} creada exitosamente con GSI clienteId-index", TABLA_TRANSACCIONES);
     }
 
     private boolean tablaExiste(String nombreTabla) {

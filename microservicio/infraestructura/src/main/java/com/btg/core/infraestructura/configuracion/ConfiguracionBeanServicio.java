@@ -7,6 +7,9 @@ import com.btg.core.dominio.cliente.puerto.repositorio.RepositorioCliente;
 import com.btg.core.dominio.cliente.servicio.ServicioAutenticar;
 import com.btg.core.dominio.cliente.servicio.ServicioConsultarCliente;
 import com.btg.core.dominio.cliente.servicio.ServicioCrearCliente;
+import com.btg.core.dominio.fondo.puerto.dao.DaoFondo;
+import com.btg.core.dominio.transaccion.puerto.repositorio.RepositorioTransaccion;
+import com.btg.core.dominio.transaccion.servicio.ServicioSuscribirFondo;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -29,5 +32,12 @@ public class ConfiguracionBeanServicio {
                                                   EncriptadorContrasena encriptadorContrasena,
                                                   GeneradorToken generadorToken) {
         return new ServicioAutenticar(repositorioCliente, encriptadorContrasena, generadorToken);
+    }
+
+    @Bean
+    public ServicioSuscribirFondo servicioSuscribirFondo(DaoCliente daoCliente,
+                                                          DaoFondo daoFondo,
+                                                          RepositorioTransaccion repositorioTransaccion) {
+        return new ServicioSuscribirFondo(daoCliente, daoFondo, repositorioTransaccion);
     }
 }

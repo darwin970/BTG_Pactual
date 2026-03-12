@@ -19,3 +19,7 @@ aws:
 
 tiempoHealthCheck:
    tiempo: 50000
+
+jwt:
+   secret: ${JWT_SECRET}
+   expiracion: 86400000

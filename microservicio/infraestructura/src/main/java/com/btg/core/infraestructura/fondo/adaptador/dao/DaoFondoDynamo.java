@@ -6,6 +6,7 @@ import com.btg.core.infraestructura.fondo.adaptador.FondoItem;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 
 import java.util.List;
@@ -28,5 +29,14 @@ public class DaoFondoDynamo implements DaoFondo {
                 .map(item -> new FondoDTO(item.getId(), item.getNombre(),
                         item.getMontoMinimo(), item.getCategoria()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public FondoDTO obtenerPorId(String id) {
+        FondoItem item = tabla.getItem(Key.builder().partitionValue(id).build());
+        if (item == null) {
+            return null;
+        }
+        return new FondoDTO(item.getId(), item.getNombre(), item.getMontoMinimo(), item.getCategoria());
     }
 }
