@@ -16,6 +16,7 @@ API REST para la gestión de fondos de inversión: registro de clientes, autenti
 8. [Pruebas con Insomnia (colección incluida)](#pruebas-con-insomnia)
 9. [Estructura del Proyecto](#estructura-del-proyecto)
 10. [Ejecución de Tests](#ejecución-de-tests)
+11. [Punto 2 — Consulta SQL](#punto-2--consulta-sql)
 
 ---
 
@@ -499,6 +500,61 @@ microservicio/infraestructura/build/reports/tests/
 - Cada cliente solo puede operar sobre sus propios recursos (validación BOLA)
 - El rol `ADMIN` puede acceder a recursos de cualquier cliente
 - Las contraseñas se almacenan encriptadas con BCrypt
+
+---
+
+---
+
+## Punto 2 — Consulta SQL
+
+Archivo: `Punto 2 - Consulta SQL/consulta.sql`
+
+### Enunciado
+
+Dadas las siguientes tablas:
+
+- **`cliente`** (`id`, `nombre`, `apellidos`)
+- **`inscripcion`** (`idCliente`, `idProducto`) — productos a los que el cliente está suscrito
+- **`disponibilidad`** (`idProducto`, `idSucursal`) — en qué sucursales se oferta un producto
+- **`visitan`** (`idCliente`, `idSucursal`) — qué sucursales visita cada cliente
+
+Obtener el **nombre y apellidos** de los clientes que están inscritos en un producto que está disponible **únicamente** en sucursales que el cliente visita (es decir, el producto no debe estar disponible en ninguna sucursal que el cliente no visite).
+
+### Solución
+
+```sql
+SELECT DISTINCT 
+    c.nombre, 
+    c.apellidos
+FROM cliente c
+-- Unimos con las inscripciones actuales del cliente
+JOIN inscripcion i ON c.id = i.idCliente
+WHERE EXISTS (
+    -- 1. Verificar que el producto está en una sucursal que el cliente visita
+    SELECT 1 
+    FROM disponibilidad d
+    JOIN visitan v ON d.idSucursal = v.idSucursal
+    WHERE d.idProducto = i.idProducto 
+      AND v.idCliente = c.id
+)
+AND NOT EXISTS (
+    -- 2. EXCLUIR si el producto está en una sucursal que el cliente NO visita
+    SELECT 1 
+    FROM disponibilidad d2
+    WHERE d2.idProducto = i.idProducto
+      AND d2.idSucursal NOT IN (
+          SELECT v2.idSucursal 
+          FROM visitan v2 
+          WHERE v2.idCliente = c.id
+      )
+);
+```
+
+### Explicación
+
+- El primer `EXISTS` garantiza que el producto tiene **al menos una** sucursal que el cliente visita.
+- El `NOT EXISTS` excluye los clientes cuyo producto esté disponible en **alguna sucursal que no visitan**, asegurando que **todas** las sucursales donde se oferta el producto sean visitadas por el cliente.
+- `SELECT DISTINCT` evita duplicados cuando el cliente visita múltiples sucursales del mismo producto.
 
 ---
 
