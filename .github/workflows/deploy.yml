@@ -56,6 +56,6 @@ jobs:
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           application_name: btg-pactual
           environment_name: btg-pactual-env
-          version_label: "v${{ github.run_number }}-${{ github.sha }}"
+          version_label: "v${{ github.run_number }}-${{ github.run_attempt }}-${{ github.sha }}"
           region: us-east-1
           deployment_package: microservicio/build/libs/deploy.zip
