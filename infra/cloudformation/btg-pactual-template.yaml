@@ -38,6 +38,7 @@ Parameters:
   JwtSecret:
     Type: String
     NoEcho: true
+    Default: btg-pactual-jwt-secret-key-dev-2026-segura-256bits
     Description: Clave secreta para firmar tokens JWT (mínimo 32 caracteres recomendado)
 
   JasyptPassword:
