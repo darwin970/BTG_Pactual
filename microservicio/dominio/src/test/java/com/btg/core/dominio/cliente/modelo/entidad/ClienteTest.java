@@ -13,7 +13,7 @@ public class ClienteTest {
     @Test
     public void crearClienteConDatosCompletosExitosamente() {
         // Arrange - Act
-        Cliente cliente = new ClienteTestDataBuilder().build();
+        Cliente cliente = new ClienteTestDataBuilder().construir();
 
         // Assert
         assertEquals("abc-123-def", cliente.getId());
@@ -40,7 +40,7 @@ public class ClienteTest {
     public void crearClienteSinNombreLanzaExcepcion() {
         // Arrange - Act - Assert
         BasePrueba.assertThrows(
-                () -> new ClienteTestDataBuilder().conNombre(null).build(),
+                () -> new ClienteTestDataBuilder().conNombre(null).construir(),
                 ExcepcionValorObligatorio.class,
                 "El nombre del cliente es obligatorio"
         );
@@ -50,7 +50,7 @@ public class ClienteTest {
     public void crearClienteSinEmailLanzaExcepcion() {
         // Arrange - Act - Assert
         BasePrueba.assertThrows(
-                () -> new ClienteTestDataBuilder().conEmail(null).build(),
+                () -> new ClienteTestDataBuilder().conEmail(null).construir(),
                 ExcepcionValorObligatorio.class,
                 "El email del cliente es obligatorio"
         );
@@ -60,7 +60,7 @@ public class ClienteTest {
     public void crearClienteConEmailInvalidoLanzaExcepcion() {
         // Arrange - Act - Assert
         BasePrueba.assertThrows(
-                () -> new ClienteTestDataBuilder().conEmail("correo-invalido").build(),
+                () -> new ClienteTestDataBuilder().conEmail("correo-invalido").construir(),
                 ExcepcionValorInvalido.class,
                 "El email del cliente no tiene un formato válido"
         );
@@ -70,7 +70,7 @@ public class ClienteTest {
     public void crearClienteSinTelefonoLanzaExcepcion() {
         // Arrange - Act - Assert
         BasePrueba.assertThrows(
-                () -> new ClienteTestDataBuilder().conTelefono(null).build(),
+                () -> new ClienteTestDataBuilder().conTelefono(null).construir(),
                 ExcepcionValorObligatorio.class,
                 "El teléfono del cliente es obligatorio"
         );
@@ -80,7 +80,7 @@ public class ClienteTest {
     public void crearClienteConTelefonoNoNumericoLanzaExcepcion() {
         // Arrange - Act - Assert
         BasePrueba.assertThrows(
-                () -> new ClienteTestDataBuilder().conTelefono("abc-no-numerico").build(),
+                () -> new ClienteTestDataBuilder().conTelefono("abc-no-numerico").construir(),
                 ExcepcionValorInvalido.class,
                 "El teléfono del cliente debe ser numérico"
         );
@@ -90,7 +90,7 @@ public class ClienteTest {
     public void crearClienteConNombreVacioLanzaExcepcion() {
         // Arrange - Act - Assert
         BasePrueba.assertThrows(
-                () -> new ClienteTestDataBuilder().conNombre("").build(),
+                () -> new ClienteTestDataBuilder().conNombre("").construir(),
                 ExcepcionValorObligatorio.class,
                 "El nombre del cliente es obligatorio"
         );
@@ -100,7 +100,7 @@ public class ClienteTest {
     public void crearClienteConEmailVacioLanzaExcepcion() {
         // Arrange - Act - Assert
         BasePrueba.assertThrows(
-                () -> new ClienteTestDataBuilder().conEmail("").build(),
+                () -> new ClienteTestDataBuilder().conEmail("").construir(),
                 ExcepcionValorObligatorio.class,
                 "El email del cliente es obligatorio"
         );
@@ -110,7 +110,7 @@ public class ClienteTest {
     public void crearClienteConTelefonoVacioLanzaExcepcion() {
         // Arrange - Act - Assert
         BasePrueba.assertThrows(
-                () -> new ClienteTestDataBuilder().conTelefono("").build(),
+                () -> new ClienteTestDataBuilder().conTelefono("").construir(),
                 ExcepcionValorObligatorio.class,
                 "El teléfono del cliente es obligatorio"
         );

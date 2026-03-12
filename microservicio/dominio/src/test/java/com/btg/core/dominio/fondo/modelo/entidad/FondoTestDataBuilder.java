@@ -34,7 +34,7 @@ public class FondoTestDataBuilder {
         return this;
     }
 
-    public Fondo build() {
+    public Fondo construir() {
         return new Fondo(id, nombre, montoMinimo, categoria);
     }
 }

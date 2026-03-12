@@ -1,0 +1,13 @@
+server:
+  port: 0
+  servlet:
+    context-path: /btg
+
+spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+aws:
+  dynamodb:
+    region: us-east-2
