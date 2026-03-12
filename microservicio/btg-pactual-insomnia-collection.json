@@ -9,7 +9,7 @@
       "_type": "workspace",
       "parentId": null,
       "name": "BTG Pactual - API REST",
-      "description": "Colección de endpoints del microservicio BTG Pactual (HU01.1 + HU01.2 + HU01.3 + HU01.4 + HU01.5)",
+      "description": "Colección de endpoints del microservicio BTG Pactual (HU01.1 + HU01.2 + HU01.3 + HU01.4 + HU01.5 + HU01.6)",
       "scope": "collection"
     },
     {
@@ -536,6 +536,58 @@
       "body": {},
       "authentication": {},
       "metaSortKey": 4
+    },
+    {
+      "_id": "fld_notificaciones",
+      "_type": "request_group",
+      "parentId": "wrk_btg_pactual",
+      "name": "HU01.6 - Notificaciones",
+      "description": "Endpoints de notificaciones EMAIL/SMS y trazabilidad (HU01.6)"
+    },
+    {
+      "_id": "req_notificaciones_listar",
+      "_type": "request",
+      "parentId": "fld_notificaciones",
+      "name": "Listar Notificaciones del Cliente (200)",
+      "description": "AC7: Consultar historial de notificaciones enviadas al cliente. Requiere JWT. Retorna HTTP 200.",
+      "url": "{{ _.base_url }}/clientes/{{ _.cliente_id }}/notificaciones",
+      "method": "GET",
+      "headers": [],
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 1
+    },
+    {
+      "_id": "req_notificaciones_sin_token",
+      "_type": "request",
+      "parentId": "fld_notificaciones",
+      "name": "Notificaciones - Sin Token (401)",
+      "description": "Sin autenticación. Retorna HTTP 401.",
+      "url": "{{ _.base_url }}/clientes/{{ _.cliente_id }}/notificaciones",
+      "method": "GET",
+      "headers": [],
+      "body": {},
+      "authentication": {},
+      "metaSortKey": 2
+    },
+    {
+      "_id": "req_notificaciones_otro_cliente",
+      "_type": "request",
+      "parentId": "fld_notificaciones",
+      "name": "Notificaciones - Otro Cliente (403)",
+      "description": "BOLA: intento de acceder a notificaciones de otro cliente. Retorna HTTP 403.",
+      "url": "{{ _.base_url }}/clientes/cliente-001/notificaciones",
+      "method": "GET",
+      "headers": [],
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 3
     }
   ]
 }

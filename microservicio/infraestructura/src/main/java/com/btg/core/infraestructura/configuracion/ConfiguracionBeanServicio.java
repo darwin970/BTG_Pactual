@@ -8,6 +8,9 @@ import com.btg.core.dominio.cliente.servicio.ServicioAutenticar;
 import com.btg.core.dominio.cliente.servicio.ServicioConsultarCliente;
 import com.btg.core.dominio.cliente.servicio.ServicioCrearCliente;
 import com.btg.core.dominio.fondo.puerto.dao.DaoFondo;
+import com.btg.core.dominio.notificacion.puerto.RepositorioNotificacion;
+import com.btg.core.dominio.notificacion.puerto.ServicioEnvioNotificacion;
+import com.btg.core.dominio.notificacion.servicio.ServicioNotificacion;
 import com.btg.core.dominio.transaccion.puerto.dao.DaoTransaccion;
 import com.btg.core.dominio.transaccion.puerto.repositorio.RepositorioTransaccion;
 import com.btg.core.dominio.transaccion.servicio.ServicioCancelarSuscripcion;
@@ -56,5 +59,12 @@ public class ConfiguracionBeanServicio {
     public ServicioConsultarTransacciones servicioConsultarTransacciones(DaoCliente daoCliente,
                                                                           DaoTransaccion daoTransaccion) {
         return new ServicioConsultarTransacciones(daoCliente, daoTransaccion);
+    }
+
+    @Bean
+    public ServicioNotificacion servicioNotificacion(DaoCliente daoCliente,
+                                                      ServicioEnvioNotificacion servicioEnvioNotificacion,
+                                                      RepositorioNotificacion repositorioNotificacion) {
+        return new ServicioNotificacion(daoCliente, servicioEnvioNotificacion, repositorioNotificacion);
     }
 }

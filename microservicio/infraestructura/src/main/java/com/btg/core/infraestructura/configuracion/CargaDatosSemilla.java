@@ -3,6 +3,7 @@ package com.btg.core.infraestructura.configuracion;
 import com.btg.core.dominio.cliente.puerto.repositorio.EncriptadorContrasena;
 import com.btg.core.infraestructura.cliente.adaptador.ClienteItem;
 import com.btg.core.infraestructura.fondo.adaptador.FondoItem;
+import com.btg.core.infraestructura.notificacion.adaptador.NotificacionItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -33,6 +34,7 @@ public class CargaDatosSemilla implements CommandLineRunner {
     private static final String TABLA_CLIENTES = "Clientes";
     private static final String TABLA_FONDOS = "Fondos";
     private static final String TABLA_TRANSACCIONES = "Transacciones";
+    private static final String TABLA_NOTIFICACIONES = "Notificaciones";
 
     private final DynamoDbClient dynamoDbClient;
     private final DynamoDbTable<ClienteItem> tablaClientes;
@@ -52,6 +54,7 @@ public class CargaDatosSemilla implements CommandLineRunner {
         crearTablaClientesSiNoExiste();
         crearTablaFondosSiNoExiste();
         crearTablaTransaccionesSiNoExiste();
+        crearTablaNotificacionesSiNoExiste();
 
         if (tablaClientesVacia()) {
             cargarClientesSemilla();
@@ -138,6 +141,32 @@ public class CargaDatosSemilla implements CommandLineRunner {
         dynamoDbClient.createTable(request);
         esperarTablaActiva(TABLA_TRANSACCIONES);
         LOGGER.info("Tabla {} creada exitosamente con GSI clienteId-index", TABLA_TRANSACCIONES);
+    }
+
+    private void crearTablaNotificacionesSiNoExiste() {
+        if (tablaExiste(TABLA_NOTIFICACIONES)) {
+            LOGGER.info("La tabla {} ya existe", TABLA_NOTIFICACIONES);
+            return;
+        }
+
+        CreateTableRequest request = CreateTableRequest.builder()
+                .tableName(TABLA_NOTIFICACIONES)
+                .keySchema(KeySchemaElement.builder().attributeName("id").keyType(KeyType.HASH).build())
+                .attributeDefinitions(
+                        AttributeDefinition.builder().attributeName("id").attributeType(ScalarAttributeType.S).build(),
+                        AttributeDefinition.builder().attributeName("clienteId").attributeType(ScalarAttributeType.S).build()
+                )
+                .globalSecondaryIndexes(GlobalSecondaryIndex.builder()
+                        .indexName("clienteId-index")
+                        .keySchema(KeySchemaElement.builder().attributeName("clienteId").keyType(KeyType.HASH).build())
+                        .projection(Projection.builder().projectionType(ProjectionType.ALL).build())
+                        .build())
+                .billingMode(BillingMode.PAY_PER_REQUEST)
+                .build();
+
+        dynamoDbClient.createTable(request);
+        esperarTablaActiva(TABLA_NOTIFICACIONES);
+        LOGGER.info("Tabla {} creada exitosamente con GSI clienteId-index", TABLA_NOTIFICACIONES);
     }
 
     private boolean tablaExiste(String nombreTabla) {
