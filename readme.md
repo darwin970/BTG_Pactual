@@ -36,24 +36,33 @@ API REST para la gestión de fondos de inversión: registro de clientes, autenti
 
 ## Arquitectura
 
-El proyecto sigue **Arquitectura Hexagonal (Puertos y Adaptadores)** con **CQRS** por paquetes, organizado en tres módulos Gradle:
+El proyecto sigue **Arquitectura Hexagonal (Puertos y Adaptadores)** con **CQRS** por paquetes. Está estructurado como un **build multi-proyecto Gradle** con dos proyectos raíz:
 
 ```
-microservicio/
-├── dominio/          # Lógica de negocio pura (servicios, entidades, puertos)
-├── aplicacion/       # Manejadores de comandos y consultas (CQRS)
-└── infraestructura/  # Adaptadores REST, DynamoDB, Spring Security
+BTG_Pactual/
+├── comun/                          # Librerías transversales (composite build)
+│   ├── comun-aplicacion-comando/   # ComandoRespuesta<T>, ManejadorComandoRespuesta<C,R>
+│   ├── comun-dominio/              # Excepciones de dominio base
+│   ├── comun-infraestructura/      # ManejadorError (mapeo excepciones → HTTP)
+│   └── comun-test/                 # BasePrueba (assertThrows helper)
+│
+└── microservicio/                  # Módulo principal del servicio
+    ├── dominio/                    # Lógica de negocio pura: entidades, servicios, puertos
+    ├── aplicacion/                 # Orquestación CQRS: manejadores de comando y consulta
+    └── infraestructura/            # Adaptadores: REST controllers, DynamoDB, Spring Security
 ```
 
-**Separación CQRS:**
-- **Comando** (`repositorio/`): operaciones de escritura atómicas con `transactWriteItems`
-- **Consulta** (`dao/`): operaciones de lectura por PK o GSI
+**Flujo de dependencias:** `infraestructura` → `aplicacion` → `dominio` → `comun`
+
+**Separación CQRS dentro de cada agregado:**
+- **Comando** (`puerto/repositorio/`): operaciones de escritura atómicas con `transactWriteItems`
+- **Consulta** (`puerto/dao/`): operaciones de lectura por PK o GSI de DynamoDB
 
 ---
 
 ## Requisitos Previos
 
-- **Java 11+** instalado y en `PATH`
+- **Java 17** instalado y en `PATH` (OpenJDK Temurin 17.0.12 recomendado)
 - **AWS DynamoDB** accesible (cuenta AWS o instancia local)
   - Región configurada: `us-east-2` (tests de integración) / `us-east-1` (por defecto en producción)
 - **Credenciales AWS** configuradas (`~/.aws/credentials` o variables de entorno `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`)
@@ -245,9 +254,12 @@ Suscribe al cliente a un fondo de inversión. Descuenta el monto del saldo. **Re
     "preferenciaNotificacion": "EMAIL",
     "fecha": "2026-03-12T10:00:00",
     "fechaCancelacion": null
-  }
+  },
+  "advertencia": null
 }
 ```
+
+> El campo `advertencia` es `null` cuando la notificación se envía correctamente. Si el envío falla (sin revertir la operación), contiene: `"La notificación no pudo enviarse: ..."`
 
 **Errores:** `400` saldo insuficiente | `404` fondo no existe | `401`/`403` sin token / token ajeno
 
@@ -269,7 +281,8 @@ Cancela una suscripción activa y devuelve el monto al saldo del cliente. **Requ
     "preferenciaNotificacion": "EMAIL",
     "fecha": "2026-03-12T10:00:00",
     "fechaCancelacion": "2026-03-12T11:30:00"
-  }
+  },
+  "advertencia": null
 }
 ```
 
@@ -288,6 +301,7 @@ Consulta el historial completo de transacciones del cliente, ordenado por fecha 
   {
     "id": "uuid-transaccion-2",
     "fondoId": "3",
+    "nombreFondo": "DEUDAPRIVADA",
     "clienteId": "cliente-001",
     "monto": 50000.0,
     "estado": "CANCELADA",
@@ -298,6 +312,7 @@ Consulta el historial completo de transacciones del cliente, ordenado por fecha 
   {
     "id": "uuid-transaccion-1",
     "fondoId": "1",
+    "nombreFondo": "FPV_BTG_PACTUAL_RECAUDADORA",
     "clienteId": "cliente-001",
     "monto": 75000.0,
     "estado": "ACTIVA",
@@ -314,6 +329,33 @@ Consulta el historial completo de transacciones del cliente, ordenado por fecha 
 
 ---
 
+### 🔔 Notificaciones de Trazabilidad
+
+#### `GET /clientes/{clienteId}/notificaciones`
+Consulta el historial de notificaciones enviadas al cliente (traza EMAIL/SMS). **Requiere token propio.**
+
+**Response 200:**
+```json
+[
+  {
+    "id": "uuid-notificacion",
+    "clienteId": "cliente-001",
+    "canal": "EMAIL",
+    "destinatario": "cliente@btg.com",
+    "mensaje": "Su suscripción al fondo FPV_BTG_PACTUAL_RECAUDADORA por COP $75000 ha sido procesada exitosamente.",
+    "estado": "ENVIADO",
+    "detalleError": null,
+    "timestamp": "2026-03-12T10:00:05"
+  }
+]
+```
+
+> `estado` puede ser `ENVIADO` o `ERROR`. Si es `ERROR`, `detalleError` contiene la causa del fallo.
+
+**Errores:** `401`/`403` sin token / token ajeno
+
+---
+
 ### Resumen de Endpoints
 
 | Método | Endpoint | Auth | Descripción |
@@ -324,7 +366,8 @@ Consulta el historial completo de transacciones del cliente, ordenado por fecha 
 | `GET` | `/fondos` | ✅ Token | Listar fondos disponibles |
 | `POST` | `/clientes/{clienteId}/suscripciones` | ✅ Token propio | Suscribirse a un fondo |
 | `DELETE` | `/clientes/{clienteId}/suscripciones/{transaccionId}` | ✅ Token propio | Cancelar suscripción |
-| `GET` | `/clientes/{clienteId}/transacciones` | ✅ Token propio | Consultar historial |
+| `GET` | `/clientes/{clienteId}/transacciones` | ✅ Token propio | Consultar historial de transacciones |
+| `GET` | `/clientes/{clienteId}/notificaciones` | ✅ Token propio | Consultar traza de notificaciones |
 
 ---
 
@@ -357,11 +400,13 @@ microservicio/btg-pactual-insomnia-collection.json
 4. **Flujo de prueba recomendado:**
 
    ```
-   1. POST /auth/login          → copiar el "token" y el "clienteId" al Environment
-   2. POST /clientes/{id}/suscripciones   → copiar el "id" de la respuesta a "transaccion_id"
-   3. GET  /clientes/{id}/transacciones   → verificar historial
-   4. DELETE /clientes/{id}/suscripciones/{transaccionId}  → cancelar suscripción
-   5. GET  /clientes/{id}/transacciones   → verificar estado "CANCELADA" y "N/A" → fecha real
+   1. POST /auth/login                                    → copiar "token" y "clienteId" al Environment
+   2. POST /clientes/{id}/suscripciones                   → copiar "id" de respuesta a "transaccion_id"
+   3. GET  /clientes/{id}/notificaciones                  → verificar traza ENVIADO
+   4. GET  /clientes/{id}/transacciones                   → verificar historial
+   5. DELETE /clientes/{id}/suscripciones/{transaccionId} → cancelar suscripción
+   6. GET  /clientes/{id}/transacciones                   → verificar estado "CANCELADA"
+   7. GET  /clientes/{id}/notificaciones                  → verificar segunda traza ENVIADO
    ```
 
 ### Carpetas incluidas en la colección
@@ -374,6 +419,7 @@ microservicio/btg-pactual-insomnia-collection.json
 | 📊 Suscripciones | Suscribir, saldo insuficiente, fondo inexistente, sin token, 403 |
 | 🚫 Cancelaciones | Cancelar, transacción inexistente, ya cancelada, sin token |
 | 📋 Historial de Transacciones | Historial, lista vacía, cliente inexistente, sin token |
+| 🔔 Notificaciones | Historial de trazas, lista vacía, sin token, 403 |
 
 ---
 
@@ -392,21 +438,24 @@ BTG_Pactual/
     │   └── src/main/java/.../
     │       ├── cliente/            # Agregado cliente
     │       ├── fondo/              # Agregado fondo
-    │       └── transaccion/        # Agregado transacción (suscripción, cancelación, historial)
+    │       ├── transaccion/        # Agregado transacción (suscripción, cancelación, historial)
+    │       └── notificacion/       # Agregado notificación (envío EMAIL/SMS, trazabilidad)
     │
     ├── aplicacion/                 # Manejadores CQRS
     │   └── src/main/java/.../
     │       ├── cliente/comando/    # ManejadorCrearCliente, ManejadorAutenticar
     │       ├── fondo/consulta/     # ManejadorListarFondos
-    │       └── transaccion/
-    │           ├── comando/        # ManejadorSuscribirFondo, ManejadorCancelarSuscripcion
-    │           └── consulta/       # ManejadorConsultarTransacciones
+    │       ├── transaccion/
+    │       │   ├── comando/        # ManejadorSuscribirFondo, ManejadorCancelarSuscripcion
+    │       │   └── consulta/       # ManejadorConsultarTransacciones
+    │       └── notificacion/consulta/  # ManejadorConsultarNotificaciones
     │
     ├── infraestructura/            # Adaptadores Spring Boot + DynamoDB
     │   └── src/main/java/.../
     │       ├── cliente/            # Controladores, adaptador DynamoDB cliente
     │       ├── fondo/              # Controlador, adaptador DynamoDB fondo
     │       ├── transaccion/        # Controladores, adaptadores DynamoDB transacción
+    │       ├── notificacion/       # Controlador, adaptadores DynamoDB notificación, mock envío
     │       └── configuracion/      # ConfiguracionBeanServicio, CargaDatosSemilla, Seguridad JWT
     │
     ├── btg-pactual-insomnia-collection.json   # ← Colección Insomnia con todos los requests
@@ -454,34 +503,6 @@ microservicio/infraestructura/build/reports/tests/
 ---
 
 *Proyecto desarrollado con Método Ceiba — Arquitectura Hexagonal + CQRS + DDD*
-
-
-Este bloque contiene la estructura necesaria para construir un proyecto en java favoreciendo el enfoque de DDD. 
-
-Los principales patrones y estilos de arquitectura que guían este bloque son
-
-#### Arquitectura hexagonal
-Arquitectura que fomenta  que nuestro dominio sea el núcleo de todas las capas, también conocida como puertos y adaptadores en la cual el dominio define los puertos y en las capas superiores se definen los adaptadores para desacoplar el dominio. Se divide princialmente en tres capas, **aplicación**, **dominio** e **infraestructura**
-- **Infraestructura**: Capa que tiene las responsabilidades de realizar los adaptadores a los puertos definidos en el domino, exponer web services, consumir web services, realizar conexiones a bases de datos, ejecutar sentencias DML, en general todo lo que sea implementaciones de cualquier framework
-- **Aplicación**: capa encargada de enrutar los eventos entrantes de la capa de infraestructura hacía la capa del dominio, generalmente se conoce como una barrera transaccional la cual agrupa toda la invocación de un caso de uso, se pueden encontrar patrones como Fabricas, Manejadores de Comandos, Bus de eventos, etc 
-- **Dominio**: representa toda la lógica de negocio de la aplicación la cual es la razón de existir del negocio. Se busca evitar el anti-patron [https://martinfowler.com/bliki/AnemicDomainModel.html](https://martinfowler.com/bliki/AnemicDomainModel.html)  y favorecer el principio [https://martinfowler.com/bliki/TellDontAsk.html](https://martinfowler.com/bliki/TellDontAsk.html) en esta capa se pueden encontrar los siguientes patrones agregados, servicios de dominio, entidades, objetos de valor, repositorios (puerto), etc. 
-
-Para obtener mas documentación sobre este tipo de arquitectura se recomienda [https://codely.tv/blog/screencasts/arquitectura-hexagonal-ddd/](https://codely.tv/blog/screencasts/arquitectura-hexagonal-ddd/)
-
-#### Patrón CQRS:  
-Patrón con el cual dividimos nuestro modelo de objetos en dos, un modelo para consulta y un modelo para comando (modificación de datos). Este patrón es recomendado cuando se va desarrollar lógica de negocio compleja porque nos ayuda a separar las responsabilidades y a mantener un modelo de negocio consistente. 
-
- - **Consulta**: modelo a través del cual se divide la responsabilidad para presentar datos en la interfaz de usuario, los objetos se modelan basado en lo que se va a presentar y no en la lógica de negocio, ejm: ver facturas, consultar clientes
- - **Comando**: son todas las operaciones que cambian el estado del sistema, ejm: (facturar, aplicar descuento), este modelo se construye todo el modelo de objetos basado en la lógica de negocio de la aplicación  
-
-Para mayor documentación del patrón [https://martinfowler.com/bliki/CQRS.html](https://martinfowler.com/bliki/CQRS.html)
-
-#### Especificaciones técnicas: 
-
- - Spring boot 2.1.2
- - Flayway -> administrar todos los script DDL e iniciliazadores de la bd 
- - Integración con Jenkins: Jenkins File
- - Integración con Sonar: Sonar properties
  - Acceso a la base de datos por medio de JDBC template
  - Se entregan pruebas de muestra automatizadas para cada una de las capas 
  - Pruebas de carga de ejemplo en el directorio microservicio/external-resources
