@@ -14,8 +14,11 @@ dependencies {
 	implementation project(':dominio')
 	implementation project(':aplicacion')
 
+	implementation project(':comun:comun-dominio')
 	implementation project(':comun:comun-infraestructura')
 	implementation project(':comun:comun-aplicacion-comando')
+
+	implementation project.ext.springtxt
 
 	implementation platform('software.amazon.awssdk:bom:2.25.70')
 	implementation 'software.amazon.awssdk:dynamodb-enhanced'
