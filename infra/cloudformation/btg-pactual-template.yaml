@@ -1,0 +1,261 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  BTG Pactual - Infraestructura AWS: Elastic Beanstalk (Corretto 17) + IAM + S3
+  Fase 1: Crea la infraestructura base. El deploy del JAR se realiza en Fase 2.
+
+# ──────────────────────────────────────────────────────────────────────────────
+# PARÁMETROS
+# ──────────────────────────────────────────────────────────────────────────────
+Parameters:
+
+  AppName:
+    Type: String
+    Default: btg-pactual
+    Description: Nombre base de la aplicación (usado en recursos IAM, S3, EB)
+
+  EnvName:
+    Type: String
+    Default: btg-pactual-env
+    Description: Nombre del entorno Elastic Beanstalk
+
+  SolutionStackName:
+    Type: String
+    Default: "64bit Amazon Linux 2023 v4.4.2 running Corretto 17"
+    Description: >
+      Plataforma EB. Verificar la versión disponible antes de desplegar:
+      aws elasticbeanstalk list-available-solution-stacks \
+        --query "SolutionStacks[?contains(@,'Corretto 17')]" --output table
+
+  InstanceType:
+    Type: String
+    Default: t3.micro
+    AllowedValues:
+      - t3.micro
+      - t3.small
+      - t3.medium
+    Description: Tipo de instancia EC2 (t3.micro es elegible para capa gratuita)
+
+  JwtSecret:
+    Type: String
+    NoEcho: true
+    Description: Clave secreta para firmar tokens JWT (mínimo 32 caracteres recomendado)
+
+  JasyptPassword:
+    Type: String
+    NoEcho: true
+    Default: password
+    Description: Contraseña Jasypt para desencriptar propiedades cifradas
+
+  AwsAccessKeyId:
+    Type: String
+    NoEcho: true
+    Description: AWS Access Key ID con permisos sobre DynamoDB
+
+  AwsSecretAccessKey:
+    Type: String
+    NoEcho: true
+    Description: AWS Secret Access Key correspondiente al Access Key ID
+
+  AwsRegion:
+    Type: String
+    Default: us-east-1
+    AllowedValues:
+      - us-east-1
+      - us-east-2
+      - us-west-2
+      - sa-east-1
+    Description: Región AWS donde se crearán las tablas DynamoDB
+
+# ──────────────────────────────────────────────────────────────────────────────
+# RECURSOS
+# ──────────────────────────────────────────────────────────────────────────────
+Resources:
+
+  # ── S3: Bucket para artefactos de deploy ────────────────────────────────────
+  ArtifactsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AppName}-artifacts-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: EliminarVersionesAntiguas
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 30
+
+  # ── IAM: Rol para instancias EC2 de Elastic Beanstalk ───────────────────────
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AppName}-ec2-role"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:CreateTable
+                  - dynamodb:DescribeTable
+                  - dynamodb:ListTables
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:BatchWriteItem
+                  - dynamodb:BatchGetItem
+                Resource: "*"
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub "${AppName}-instance-profile"
+      Roles:
+        - !Ref EC2Role
+
+  # ── IAM: Service Role para Elastic Beanstalk ─────────────────────────────────
+  BeanstalkServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AppName}-beanstalk-service-role"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: elasticbeanstalk.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSElasticBeanstalkEnhancedHealth
+        - arn:aws:iam::aws:policy/AWSElasticBeanstalkManagedUpdatesCustomerRolePolicy
+
+  # ── Elastic Beanstalk: Aplicación ────────────────────────────────────────────
+  BeanstalkApplication:
+    Type: AWS::ElasticBeanstalk::Application
+    Properties:
+      ApplicationName: !Ref AppName
+      Description: BTG Pactual - Plataforma de Gestión de Fondos de Inversión
+
+  # ── Elastic Beanstalk: Entorno ────────────────────────────────────────────────
+  # Nota: sin VersionLabel → EB despliega la app de ejemplo mientras se sube el JAR real.
+  BeanstalkEnvironment:
+    Type: AWS::ElasticBeanstalk::Environment
+    DependsOn:
+      - EC2InstanceProfile
+      - BeanstalkServiceRole
+    Properties:
+      ApplicationName: !Ref BeanstalkApplication
+      EnvironmentName: !Ref EnvName
+      SolutionStackName: !Ref SolutionStackName
+      Tier:
+        Name: WebServer
+        Type: Standard
+
+      OptionSettings:
+
+        # Entorno SingleInstance: una sola EC2, sin Load Balancer (menor costo)
+        - Namespace: aws:elasticbeanstalk:environment
+          OptionName: EnvironmentType
+          Value: SingleInstance
+
+        - Namespace: aws:elasticbeanstalk:environment
+          OptionName: ServiceRole
+          Value: !Ref BeanstalkServiceRole
+
+        # Instancia EC2
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: InstanceType
+          Value: !Ref InstanceType
+
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: IamInstanceProfile
+          Value: !Ref EC2InstanceProfile
+
+        # Health check → GET /btg/health (endpoint público, sin auth, retorna 200)
+        - Namespace: aws:elasticbeanstalk:application
+          OptionName: Application Healthcheck URL
+          Value: /btg/health
+
+        # Puerto: EB nginx reenvía al 5000; Spring Boot escucha en 5000 via SERVER_PORT
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: SERVER_PORT
+          Value: "5000"
+
+        # Variables de entorno de la aplicación
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: JWT_SECRET
+          Value: !Ref JwtSecret
+
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: jasyptpwd
+          Value: !Ref JasyptPassword
+
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: AWS_ACCESS_KEY_ID
+          Value: !Ref AwsAccessKeyId
+
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: AWS_SECRET_ACCESS_KEY
+          Value: !Ref AwsSecretAccessKey
+
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: AWS_REGION
+          Value: !Ref AwsRegion
+
+        # JVM tuning para t3.micro (1 GB RAM)
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: JAVA_TOOL_OPTIONS
+          Value: "-Xms256m -Xmx512m"
+
+        # Logs → CloudWatch (retención 7 días, se eliminan al destruir el entorno)
+        - Namespace: aws:elasticbeanstalk:cloudwatch:logs
+          OptionName: StreamLogs
+          Value: "true"
+        - Namespace: aws:elasticbeanstalk:cloudwatch:logs
+          OptionName: DeleteOnTerminate
+          Value: "true"
+        - Namespace: aws:elasticbeanstalk:cloudwatch:logs
+          OptionName: RetentionInDays
+          Value: "7"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# OUTPUTS
+# ──────────────────────────────────────────────────────────────────────────────
+Outputs:
+
+  ApplicationURL:
+    Description: URL pública de la API (disponible tras el deploy del JAR en Fase 2)
+    Value: !Sub "http://${BeanstalkEnvironment.EndpointURL}/btg"
+    Export:
+      Name: !Sub "${AWS::StackName}-ApplicationURL"
+
+  ArtifactsBucketName:
+    Description: Nombre del bucket S3 donde subir el JAR en Fase 2
+    Value: !Ref ArtifactsBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-ArtifactsBucket"
+
+  BeanstalkAppName:
+    Description: Nombre de la aplicación en Elastic Beanstalk
+    Value: !Ref BeanstalkApplication
+    Export:
+      Name: !Sub "${AWS::StackName}-AppName"
+
+  BeanstalkEnvName:
+    Description: Nombre del entorno en Elastic Beanstalk
+    Value: !Ref EnvName
+    Export:
+      Name: !Sub "${AWS::StackName}-EnvName"

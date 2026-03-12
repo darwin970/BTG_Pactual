@@ -27,6 +27,7 @@ public class ConfiguracionSeguridad {
             .and()
             .authorizeRequests()
             .antMatchers(HttpMethod.POST, "/auth/login", "/clientes").permitAll()
+            .antMatchers(HttpMethod.GET, "/health").permitAll()
             .antMatchers("/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated()
             .and()
