@@ -1,0 +1,541 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-03-12T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2024.1.0",
+  "resources": [
+    {
+      "_id": "wrk_btg_pactual",
+      "_type": "workspace",
+      "parentId": null,
+      "name": "BTG Pactual - API REST",
+      "description": "Colección de endpoints del microservicio BTG Pactual (HU01.1 + HU01.2 + HU01.3 + HU01.4 + HU01.5)",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "parentId": "wrk_btg_pactual",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:8083/btg",
+        "token": "",
+        "cliente_id": "",
+        "transaccion_id": ""
+      }
+    },
+    {
+      "_id": "fld_auth",
+      "_type": "request_group",
+      "parentId": "wrk_btg_pactual",
+      "name": "🔐 Autenticación",
+      "description": "Endpoints de autenticación y login (HU01.2)"
+    },
+    {
+      "_id": "fld_clientes",
+      "_type": "request_group",
+      "parentId": "wrk_btg_pactual",
+      "name": "👤 Clientes",
+      "description": "Endpoints de gestión de clientes (HU01.1 + HU01.2)"
+    },
+    {
+      "_id": "fld_fondos",
+      "_type": "request_group",
+      "parentId": "wrk_btg_pactual",
+      "name": "💰 Fondos",
+      "description": "Endpoints de fondos de inversión (HU01.1)"
+    },
+    {
+      "_id": "fld_errores",
+      "_type": "request_group",
+      "parentId": "wrk_btg_pactual",
+      "name": "⛔ Pruebas de Error",
+      "description": "Requests para validar manejo de errores de seguridad (HU01.2)"
+    },
+    {
+      "_id": "req_login",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Login (POST /auth/login)",
+      "description": "AC1: Autenticación con credenciales válidas. Retorna JWT + expiración.\n\nGuarda automáticamente el token y clienteId en las variables de entorno.",
+      "url": "{{ _.base_url }}/auth/login",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"testuser@email.com\",\n  \"contrasena\": \"MiClave123*\"\n}"
+      },
+      "authentication": {},
+      "metaSortKey": 1
+    },
+    {
+      "_id": "req_login_admin",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Login Admin (POST /auth/login)",
+      "description": "Login con usuario semilla ADMIN.\n\nNota: Solo funciona si la tabla estaba vacía al iniciar el microservicio (datos semilla cargados).",
+      "url": "{{ _.base_url }}/auth/login",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"admin@btg.com\",\n  \"contrasena\": \"Admin123*\"\n}"
+      },
+      "authentication": {},
+      "metaSortKey": 2
+    },
+    {
+      "_id": "req_login_invalid",
+      "_type": "request",
+      "parentId": "fld_errores",
+      "name": "Login Inválido - Contraseña incorrecta",
+      "description": "AC2: Debe retornar HTTP 401 con mensaje 'Credenciales inválidas'",
+      "url": "{{ _.base_url }}/auth/login",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"testuser@email.com\",\n  \"contrasena\": \"ClaveIncorrecta\"\n}"
+      },
+      "authentication": {},
+      "metaSortKey": 1
+    },
+    {
+      "_id": "req_login_noexiste",
+      "_type": "request",
+      "parentId": "fld_errores",
+      "name": "Login Inválido - Email no registrado",
+      "description": "AC2: Debe retornar HTTP 401 con mensaje 'Credenciales inválidas'",
+      "url": "{{ _.base_url }}/auth/login",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"noexiste@email.com\",\n  \"contrasena\": \"Cualquier123\"\n}"
+      },
+      "authentication": {},
+      "metaSortKey": 2
+    },
+    {
+      "_id": "req_crear_cliente",
+      "_type": "request",
+      "parentId": "fld_clientes",
+      "name": "Registrar Cliente (POST /clientes)",
+      "description": "AC6: Registro de nuevo cliente con contraseña (BCrypt). No requiere token.\n\nGuarda el ID retornado en la variable cliente_id.",
+      "url": "{{ _.base_url }}/clientes",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nombre\": \"Test User\",\n  \"email\": \"testuser@email.com\",\n  \"telefono\": \"3001234567\",\n  \"contrasena\": \"MiClave123*\"\n}"
+      },
+      "authentication": {},
+      "metaSortKey": 1
+    },
+    {
+      "_id": "req_consultar_cliente",
+      "_type": "request",
+      "parentId": "fld_clientes",
+      "name": "Consultar Cliente (GET /clientes/{id})",
+      "description": "AC8: Consulta de cliente autenticado. Requiere token Bearer.\nAC7: La respuesta incluye 'rol' pero NO incluye 'contrasena'.",
+      "url": "{{ _.base_url }}/clientes/{{ _.cliente_id }}",
+      "method": "GET",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 2
+    },
+    {
+      "_id": "req_listar_fondos",
+      "_type": "request",
+      "parentId": "fld_fondos",
+      "name": "Listar Fondos (GET /fondos)",
+      "description": "AC8: Lista los 5 fondos de inversión. Requiere token Bearer.",
+      "url": "{{ _.base_url }}/fondos",
+      "method": "GET",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 1
+    },
+    {
+      "_id": "req_sin_token_clientes",
+      "_type": "request",
+      "parentId": "fld_errores",
+      "name": "Sin Token - GET /clientes/{id}",
+      "description": "AC3: Acceso sin token. Debe retornar HTTP 401 'Autenticación requerida'",
+      "url": "{{ _.base_url }}/clientes/{{ _.cliente_id }}",
+      "method": "GET",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {},
+      "authentication": {},
+      "metaSortKey": 3
+    },
+    {
+      "_id": "req_sin_token_fondos",
+      "_type": "request",
+      "parentId": "fld_errores",
+      "name": "Sin Token - GET /fondos",
+      "description": "AC3: Acceso sin token. Debe retornar HTTP 401 'Autenticación requerida'",
+      "url": "{{ _.base_url }}/fondos",
+      "method": "GET",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {},
+      "authentication": {},
+      "metaSortKey": 4
+    },
+    {
+      "_id": "req_token_invalido",
+      "_type": "request",
+      "parentId": "fld_errores",
+      "name": "Token Inválido/Corrupto",
+      "description": "AC4: Token corrupto. Debe retornar HTTP 401 'Token inválido'",
+      "url": "{{ _.base_url }}/fondos",
+      "method": "GET",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "token-invalido-corrupto"
+      },
+      "metaSortKey": 5
+    },
+    {
+      "_id": "req_acceso_denegado_admin",
+      "_type": "request",
+      "parentId": "fld_errores",
+      "name": "Acceso Denegado - /admin con rol CLIENTE",
+      "description": "AC5: Rol CLIENTE intentando acceder a /admin. Debe retornar HTTP 403 'Acceso denegado'",
+      "url": "{{ _.base_url }}/admin/test",
+      "method": "GET",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 6
+    },
+    {
+      "_id": "fld_suscripciones",
+      "_type": "request_group",
+      "parentId": "wrk_btg_pactual",
+      "name": "📊 Suscripciones",
+      "description": "Endpoints de suscripción a fondos de inversión (HU01.3)"
+    },
+    {
+      "_id": "req_suscripcion_exitosa",
+      "_type": "request",
+      "parentId": "fld_suscripciones",
+      "name": "Suscribir a Fondo (POST /clientes/{clienteId}/suscripciones)",
+      "description": "AC1: Suscripción exitosa a fondo de inversión. Retorna HTTP 201 con detalle de transacción.\nRequiere token Bearer del cliente.",
+      "url": "{{ _.base_url }}/clientes/{{ _.cliente_id }}/suscripciones",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"fondoId\": \"1\",\n  \"monto\": 75000,\n  \"preferenciaNotificacion\": \"EMAIL\"\n}"
+      },
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 1
+    },
+    {
+      "_id": "req_suscripcion_saldo_insuficiente",
+      "_type": "request",
+      "parentId": "fld_suscripciones",
+      "name": "Suscripción - Saldo Insuficiente (400)",
+      "description": "AC2: Saldo insuficiente. Retorna HTTP 400 con mensaje de error.",
+      "url": "{{ _.base_url }}/clientes/{{ _.cliente_id }}/suscripciones",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"fondoId\": \"1\",\n  \"monto\": 999999999,\n  \"preferenciaNotificacion\": \"EMAIL\"\n}"
+      },
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 2
+    },
+    {
+      "_id": "req_suscripcion_fondo_inexistente",
+      "_type": "request",
+      "parentId": "fld_suscripciones",
+      "name": "Suscripción - Fondo Inexistente (404)",
+      "description": "AC3: Fondo con ID inexistente. Retorna HTTP 404 'Fondo no encontrado'.",
+      "url": "{{ _.base_url }}/clientes/{{ _.cliente_id }}/suscripciones",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"fondoId\": \"999\",\n  \"monto\": 75000,\n  \"preferenciaNotificacion\": \"EMAIL\"\n}"
+      },
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 3
+    },
+    {
+      "_id": "req_suscripcion_cliente_inexistente",
+      "_type": "request",
+      "parentId": "fld_suscripciones",
+      "name": "Suscripción - Cliente Inexistente (404)",
+      "description": "AC4: Cliente con ID inexistente. Retorna HTTP 404 'El cliente no existe'.",
+      "url": "{{ _.base_url }}/clientes/id-no-existe/suscripciones",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"fondoId\": \"1\",\n  \"monto\": 75000,\n  \"preferenciaNotificacion\": \"EMAIL\"\n}"
+      },
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 4
+    },
+    {
+      "_id": "req_suscripcion_sin_token",
+      "_type": "request",
+      "parentId": "fld_suscripciones",
+      "name": "Suscripción - Sin Token (401)",
+      "description": "AC9: Sin autenticación. Retorna HTTP 401.",
+      "url": "{{ _.base_url }}/clientes/{{ _.cliente_id }}/suscripciones",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"fondoId\": \"1\",\n  \"monto\": 75000,\n  \"preferenciaNotificacion\": \"EMAIL\"\n}"
+      },
+      "authentication": {},
+      "metaSortKey": 5
+    },
+    {
+      "_id": "fld_cancelaciones",
+      "_type": "request_group",
+      "parentId": "wrk_btg_pactual",
+      "name": "🚫 Cancelaciones",
+      "description": "Endpoints de cancelación de suscripción (HU01.4)"
+    },
+    {
+      "_id": "req_cancelar_suscripcion",
+      "_type": "request",
+      "parentId": "fld_cancelaciones",
+      "name": "Cancelar Suscripción (DELETE /clientes/{clienteId}/suscripciones/{transaccionId})",
+      "description": "AC1+AC2: Cancelar suscripción activa, devolver monto al saldo.",
+      "url": "{{ _.base_url }}/clientes/{{ _.cliente_id }}/suscripciones/{{ _.transaccion_id }}",
+      "method": "DELETE",
+      "headers": [],
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 1
+    },
+    {
+      "_id": "req_cancelar_inexistente",
+      "_type": "request",
+      "parentId": "fld_cancelaciones",
+      "name": "Cancelar - Transacción Inexistente (404)",
+      "description": "AC3: Transacción no existe. Retorna HTTP 404.",
+      "url": "{{ _.base_url }}/clientes/{{ _.cliente_id }}/suscripciones/txn-no-existe",
+      "method": "DELETE",
+      "headers": [],
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 2
+    },
+    {
+      "_id": "req_cancelar_ya_cancelada",
+      "_type": "request",
+      "parentId": "fld_cancelaciones",
+      "name": "Cancelar - Ya Cancelada (400)",
+      "description": "AC4: Suscripción ya cancelada. Retorna HTTP 400.",
+      "url": "{{ _.base_url }}/clientes/{{ _.cliente_id }}/suscripciones/{{ _.transaccion_id }}",
+      "method": "DELETE",
+      "headers": [],
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 3
+    },
+    {
+      "_id": "req_cancelar_sin_token",
+      "_type": "request",
+      "parentId": "fld_cancelaciones",
+      "name": "Cancelar - Sin Token (401)",
+      "description": "AC5: Sin autenticación. Retorna HTTP 401.",
+      "url": "{{ _.base_url }}/clientes/{{ _.cliente_id }}/suscripciones/{{ _.transaccion_id }}",
+      "method": "DELETE",
+      "headers": [],
+      "body": {},
+      "authentication": {},
+      "metaSortKey": 4
+    },
+    {
+      "_id": "fld_historial",
+      "_type": "request_group",
+      "parentId": "wrk_btg_pactual",
+      "name": "📋 Historial de Transacciones",
+      "description": "Endpoints de consulta de historial de transacciones (HU01.5)"
+    },
+    {
+      "_id": "req_historial_exitoso",
+      "_type": "request",
+      "parentId": "fld_historial",
+      "name": "Consultar Historial (GET /clientes/{clienteId}/transacciones)",
+      "description": "AC1+AC5: Retorna lista ordenada descendente de transacciones activas y canceladas.",
+      "url": "{{ _.base_url }}/clientes/{{ _.cliente_id }}/transacciones",
+      "method": "GET",
+      "headers": [],
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 1
+    },
+    {
+      "_id": "req_historial_vacio",
+      "_type": "request",
+      "parentId": "fld_historial",
+      "name": "Historial Vacío (200 lista vacía)",
+      "description": "AC3: Cliente sin transacciones. Retorna HTTP 200 con [].",
+      "url": "{{ _.base_url }}/clientes/{{ _.cliente_id }}/transacciones",
+      "method": "GET",
+      "headers": [],
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 2
+    },
+    {
+      "_id": "req_historial_cliente_inexistente",
+      "_type": "request",
+      "parentId": "fld_historial",
+      "name": "Historial - Cliente Inexistente (404)",
+      "description": "AC4: Cliente no existe. Retorna HTTP 404.",
+      "url": "{{ _.base_url }}/clientes/id-no-existe/transacciones",
+      "method": "GET",
+      "headers": [],
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token }}"
+      },
+      "metaSortKey": 3
+    },
+    {
+      "_id": "req_historial_sin_token",
+      "_type": "request",
+      "parentId": "fld_historial",
+      "name": "Historial - Sin Token (401)",
+      "description": "AC6: Sin autenticación. Retorna HTTP 401.",
+      "url": "{{ _.base_url }}/clientes/{{ _.cliente_id }}/transacciones",
+      "method": "GET",
+      "headers": [],
+      "body": {},
+      "authentication": {},
+      "metaSortKey": 4
+    }
+  ]
+}
